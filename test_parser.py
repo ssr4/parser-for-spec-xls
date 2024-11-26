@@ -6,6 +6,8 @@ from collections import OrderedDict
 from datetime import datetime
 import json
 
+FILE_NAME = "weather.json"
+
 REGION_NAMES = ['Моск', 'СПБ-В', 'С.-Петер', 'Петр', 'Мурм', 'Волх']
 
 NUMBER_OF_INDICATORS = 6
@@ -30,42 +32,46 @@ MONTH_VALUES = {
 
 # костыль
 STATION_CODES = {
-    "Москва": "060232",
-    "Тверь": "061502",
-    "Бологое": "050009",
-    "Сонково": "051106",
-    "Ржев": "063006",
-    "Чудово": "042003",
-    "Малая Вишера": "041602",
-    "Тосно": "031302",
-    "Санкт-Петербург": "030006",
-    "Мга": "030203",
-    "Зеленогорск": "039301",
-    "Выборг": "020004",
-    "Приозерск": "023002",
-    "Дно": "056701",
-    "Великие Луки": "066008",
-    "Псков": "070501",
-    "Гатчина": "034007",
-    "Усть-Луга": "074502",
-    "Волховстрой": "040008",
-    "Тихвин": "047505",
-    "Бабаево": "046409",
-    "Нелазское": "046201",
-    "Хвойная": "043909",
-    "Лодейное Поле": "049106",
+    "Москва": "06007",
+    "Тверь": "06150",
+    "Бологое": "05000",
+    "Сонково": "05110",
+    "Ржев": "06300",
+    "Чудово": "04200",
+    "Малая Вишера": "04160",
+    "Тосно": "03130",
+    "Санкт-Петербург": "03000",
+    "Мга": "03020",
+    "Зеленогорск": "03930",
+    "Выборг": "02000",
+    "Приозерск": "02300",
+    "Дно": "05670",
+    "Великие Луки": "06600",
+    "Псков": "07050",
+    "Гатчина": "03400",
+    "Усть-Луга": "07450",
+    "Волховстрой": "04000",
+    "Тихвин": "04750",
+    "Бабаево": "04640",
+    "Нелазское": "04620",
+    "Хвойная": "04390",
+    "Лодейное Поле": "04910",
     "Петрозаводск": "01000",
-    "Медвежья Гора": "011306",
-    "Беломорск": "013000",
-    "Кемь": "013208",
-    "Костомукша": "027802",
-    "Сортавала": "023708",
-    "Кандалакша": "014906",
-    "Апатиты": "016009",
-    "Оленегорск": "016308",
-    "Полярный Круг": "014338",
-    "Мурманск": "018409",
-    "Магнетиты": "016831"
+    "Медвежья Гора": "01130",
+    "Беломорск": "01300",
+    "Кемь": "01320",
+    "Костомукша": "02780",
+    "Сортавала": "02370",
+    "Кандалакша": "01490",
+    "Апатиты": "01600",
+    "Оленегорск": "01630",
+    "Полярный Круг": "01433",
+    "Мурманск": "01840",
+    "Магнетиты": "01683"
+}
+
+OBJ_FOR_JSON = {
+
 }
 
 
@@ -81,7 +87,42 @@ def convert_number_of_region(region_str):
     return region_str
 
 
+def create_json(name):
+    json_data = []
+    with open(name, "w") as write_file:
+        json.dump(json_data, write_file)
+
+
+def add_to_json_test(data_from_parsing):
+    print(data_from_parsing)
+    json_data = {
+        data_from_parsing[1]: {
+            "region": data_from_parsing[0],
+            "header": "День",
+            "data": [
+                {
+                    "titleOfWindGusts": "Порывы ветра, м/с",
+                    "titleOfTemperature": "Температура возд, гр.С.",
+                    "titleOfSnowHeight": "Высота снега,см",
+                    "titleOfRainfall": "Осадки, мм/12ч.",
+                    "titleOfBlackIce": "Гололед",
+                }]
+        }
+    }
+    data = json.load(open(FILE_NAME))
+    data.append(json_data)
+    with open(FILE_NAME, "w") as file:
+        json.dump(data, file)
+
+def add_to_json(name, data_from_parsing):
+    data = json.load(open(name))
+    data.append(data_from_parsing)
+    with open(name, "w", encoding='utf-8') as file:
+        json.dump(data, file,indent=2,ensure_ascii=False)
+    
+
 try:
+    create_json(FILE_NAME)
     with open('example5.csv') as file_obj:
         reader_obj = csv.reader(file_obj)
         # regexp = re.compile(r'[A-Za-z]')
@@ -89,8 +130,6 @@ try:
         mas_of_dates = []
         mas_with_data = []
         for row_in_csv in reader_obj:
-            # row_in_csv = [row for index, row in enumerate(row_in_csv) if (
-            #     row and index > SHIFT_IN_INDICATORS) or (index < SHIFT_IN_INDICATORS and row)]
             if (len(row_in_csv)):
                 mas_of_dates_unsorted = list(
                     filter(regexp.match, row_in_csv))
@@ -101,27 +140,82 @@ try:
                     if (region in row_in_csv):
                         mas_with_data.append(
                             convert_number_of_region(row_in_csv))
-                        print(row_in_csv)
-     # if (len(new_row_in_csv_with_date)):
-                #     if (len(DATES_OF_REQUEST) == 0):
-                #         for date in new_row_in_csv_with_date:
-                #             DATES_OF_REQUEST.append(
-                #                 date)
-    # for date_str in DATES_OF_REQUEST:
-    #     # Day + Month
-    #     date = re.findall(r'\d+.[A-Za-z]+', date_str)
-    #     year_search = re.findall(r'\d{4}', date_str)
-    #     if (len(year_search)):
-    #         year = year_search.pop()
-    #         print(year)
-    #     convert_date(date.pop())
-
-    #  mas_with_data, mas_of_dates
+                        station = row_in_csv[1]
+                        # if (station in OBJ_FOR_JSON):
+                        #     # удаляем код региона и станции
+                        #     row_in_csv.pop(0)
+                        #     row_in_csv.pop(0)
+                        #     OBJ_FOR_JSON[station].append(row_in_csv)
+                        if (station not in OBJ_FOR_JSON): 
+                            # удаляем код региона и станции
+                            row_in_csv.pop(0)
+                            row_in_csv.pop(0)
+                            OBJ_FOR_JSON[station] = []
+                            OBJ_FOR_JSON[station].append({"header": "День",
+                                                          "data": [{
+                "index": 1,
+                "titleOfWindGusts": "Порывы ветра, м/с",
+                "titleOfTemperature": "Температура возд, гр.С.",
+                "titleOfSnowHeight":"Высота снега,см",
+                "titleOfRainfall": "Осадки, мм/12ч.",
+                "titleOfBlackIce": "Гололед",
+                "viewOsad": [],
+                "indicatorsOfRainfall": [],
+                "indicatorsOfTemperature": [],
+                "indicatorsOfSnowHeight": [],
+                "indicatorsOfGustWind": [],
+                "indicatorsOfBlackIce": []
+                }]})
+                            OBJ_FOR_JSON[station].append({"header": "Ночь",
+                                                          "data": [{
+                "index": 1,
+                "titleOfWindGusts": "Порывы ветра, м/с",
+                "titleOfTemperature": "Температура возд, гр.С.",
+                "titleOfSnowHeight":"Высота снега,см",
+                "titleOfRainfall": "Осадки, мм/12ч.",
+                "titleOfBlackIce": "Гололед",
+                "viewOsad": [],
+                "indicatorsOfRainfall": [],
+                "indicatorsOfTemperature": [],
+                "indicatorsOfSnowHeight": [],
+                "indicatorsOfGustWind": [],
+                "indicatorsOfBlackIce": []
+                }]})
+                            # OBJ_FOR_JSON[station].append(row_in_csv)
+                        for index, str_indicator in enumerate(row_in_csv):
+                            night_data_in_json = OBJ_FOR_JSON[station][0]["data"][0]
+                            day_data_in_json = OBJ_FOR_JSON[station][1]["data"][0]
+                            if(index < 6):
+                                if(index % 2):
+                                    night_data_in_json['viewOsad'].append(str_indicator)
+                                else:
+                                    day_data_in_json['viewOsad'].append(str_indicator)
+                            elif(index < 12):
+                                if(index % 2):
+                                    night_data_in_json['indicatorsOfRainfall'].append(str_indicator)
+                                else:
+                                    day_data_in_json['indicatorsOfRainfall'].append(str_indicator)
+                            elif(index < 18):
+                                if(index % 2):
+                                    night_data_in_json['indicatorsOfTemperature'].append(str_indicator)
+                                else:
+                                    day_data_in_json['indicatorsOfTemperature'].append(str_indicator)
+                            elif(index < 24):
+                                if(index % 2):
+                                    night_data_in_json['indicatorsOfSnowHeight'].append(str_indicator)
+                                else:
+                                    day_data_in_json['indicatorsOfSnowHeight'].append(str_indicator)
+                            elif(index < 30):
+                                if(index % 2):
+                                    night_data_in_json['indicatorsOfGustWind'].append(str_indicator)
+                                else:
+                                    day_data_in_json['indicatorsOfGustWind'].append(str_indicator)
+                            elif(index < 36):
+                                if(index % 2):
+                                    night_data_in_json['indicatorsOfBlackIce'].append(str_indicator)
+                                else:
+                                    day_data_in_json['indicatorsOfBlackIce'].append(str_indicator)
+    if(len(OBJ_FOR_JSON)):                            
+        add_to_json(FILE_NAME, OBJ_FOR_JSON)
 except Exception as e:
     print('Exception', e)
-
- # for r in row:
-    #   row_in_csv = r.encode().decode().replace(';', ' ')
-    #   if row_in_csv:
-    #     # print("\n" in row_in_csv, row_in_csv == "")
-    #     print(row_in_csv)
