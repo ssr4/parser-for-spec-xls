@@ -138,22 +138,21 @@ try:
                         list(OrderedDict.fromkeys(mas_of_dates_unsorted)))
                 for region in REGION_NAMES:
                     if (region in row_in_csv):
+                        # на будущее запомним наименование станции
+                        station_name = row_in_csv[1]
                         mas_with_data.append(
                             convert_number_of_region(row_in_csv))
                         station = row_in_csv[1]
-                        # if (station in OBJ_FOR_JSON):
-                        #     # удаляем код региона и станции
-                        #     row_in_csv.pop(0)
-                        #     row_in_csv.pop(0)
-                        #     OBJ_FOR_JSON[station].append(row_in_csv)
+                        row_in_csv.pop(0)
+                        row_in_csv.pop(0)
                         if (station not in OBJ_FOR_JSON): 
                             # удаляем код региона и станции
-                            row_in_csv.pop(0)
-                            row_in_csv.pop(0)
                             OBJ_FOR_JSON[station] = []
                             OBJ_FOR_JSON[station].append({"header": "День",
                                                           "data": [{
                 "index": 1,
+                "stationName": station_name,
+                "titleOfViewOsad": "Вид осадков",
                 "titleOfWindGusts": "Порывы ветра, м/с",
                 "titleOfTemperature": "Температура возд, гр.С.",
                 "titleOfSnowHeight":"Высота снега,см",
@@ -169,6 +168,8 @@ try:
                             OBJ_FOR_JSON[station].append({"header": "Ночь",
                                                           "data": [{
                 "index": 1,
+                "stationName": station_name,
+                "titleOfViewOsad": "Вид осадков",
                 "titleOfWindGusts": "Порывы ветра, м/с",
                 "titleOfTemperature": "Температура возд, гр.С.",
                 "titleOfSnowHeight":"Высота снега,см",
