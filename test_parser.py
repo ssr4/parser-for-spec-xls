@@ -6,15 +6,23 @@ from collections import OrderedDict
 from datetime import datetime
 import json
 
-FILE_NAME = "weather.json"
+JSON_FILE_NAME = "weather.json"
 
-REGION_NAMES = ['Моск', 'СПБ-В', 'С.-Петер', 'Петр', 'Мурм', 'Волх']
+REGION_NAMES = ['Моск', 'СПб-В', 'С.-Петер', 'Петр', 'Мурм', 'Волх']
 
+# количество показателей
 NUMBER_OF_INDICATORS = 6
-NUMBER_OF_FIELDS_IN_INDICATORS = 6
+
+# количество наборов показателей
+NUMBER_OF_INDICATOR_SETS = 6
+
+# сдвиг в показателях, чтобы пропускать ненужные колонки
 # +2 потому что пропускаем первые два поля
-SHIFT_IN_INDICATORS = NUMBER_OF_INDICATORS * NUMBER_OF_FIELDS_IN_INDICATORS + 2
+SHIFT_IN_INDICATORS = NUMBER_OF_INDICATORS * NUMBER_OF_INDICATOR_SETS + 2
+
+# даты по запросам
 DATES_OF_REQUEST = []
+
 MONTH_VALUES = {
     'Jan': 1,
     'Feb': 2,
@@ -70,10 +78,10 @@ STATION_CODES = {
     "Магнетиты": "01683"
 }
 
-OBJ_FOR_JSON = {
+OBJ_FOR_JSON = { }
 
-}
-
+REGION = 0
+STATION_NAME = 1
 
 def convert_date(date_str):
     for month, day in MONTH_VALUES.items():
@@ -81,9 +89,9 @@ def convert_date(date_str):
         print(date_str)
 
 
-def convert_number_of_region(region_str):
-    region_str[0] = REGION_NAMES.index(region_str[0]) + 1
-    region_str[1] = STATION_CODES[region_str[1]]
+def convert_region_number(region_str):
+    region_str[REGION] = REGION_NAMES.index(region_str[REGION]) + 1
+    region_str[STATION_NAME] = STATION_CODES[region_str[STATION_NAME]]
     return region_str
 
 
@@ -92,37 +100,15 @@ def create_json(name):
     with open(name, "w") as write_file:
         json.dump(json_data, write_file)
 
-
-def add_to_json_test(data_from_parsing):
-    print(data_from_parsing)
-    json_data = {
-        data_from_parsing[1]: {
-            "region": data_from_parsing[0],
-            "header": "День",
-            "data": [
-                {
-                    "titleOfWindGusts": "Порывы ветра, м/с",
-                    "titleOfTemperature": "Температура возд, гр.С.",
-                    "titleOfSnowHeight": "Высота снега,см",
-                    "titleOfRainfall": "Осадки, мм/12ч.",
-                    "titleOfBlackIce": "Гололед",
-                }]
-        }
-    }
-    data = json.load(open(FILE_NAME))
-    data.append(json_data)
-    with open(FILE_NAME, "w") as file:
-        json.dump(data, file)
-
 def add_to_json(name, data_from_parsing):
     data = json.load(open(name))
     data.append(data_from_parsing)
     with open(name, "w", encoding='utf-8') as file:
-        json.dump(data, file,indent=2,ensure_ascii=False)
+        json.dump(data, file, indent=2, ensure_ascii = False)
     
 
 try:
-    create_json(FILE_NAME)
+    create_json(JSON_FILE_NAME)
     with open('example5.csv') as file_obj:
         reader_obj = csv.reader(file_obj)
         # regexp = re.compile(r'[A-Za-z]')
@@ -138,17 +124,17 @@ try:
                         list(OrderedDict.fromkeys(mas_of_dates_unsorted)))
                 for region in REGION_NAMES:
                     if (region in row_in_csv):
-                        # на будущее запомним наименование станции
                         station_name = row_in_csv[1]
                         mas_with_data.append(
-                            convert_number_of_region(row_in_csv))
-                        station = row_in_csv[1]
+                            convert_region_number(row_in_csv))
+                        station_code = row_in_csv[1]
+                        # на будущее запомним наименование станции
                         row_in_csv.pop(0)
                         row_in_csv.pop(0)
-                        if (station not in OBJ_FOR_JSON): 
+                        if (station_code not in OBJ_FOR_JSON):
                             # удаляем код региона и станции
-                            OBJ_FOR_JSON[station] = []
-                            OBJ_FOR_JSON[station].append({"header": "День",
+                            OBJ_FOR_JSON[station_code] = []
+                            OBJ_FOR_JSON[station_code].append({"header": "День",
                                                           "data": [{
                 "index": 1,
                 "stationName": station_name,
@@ -165,7 +151,7 @@ try:
                 "indicatorsOfGustWind": [],
                 "indicatorsOfBlackIce": []
                 }]})
-                            OBJ_FOR_JSON[station].append({"header": "Ночь",
+                            OBJ_FOR_JSON[station_code].append({"header": "Ночь",
                                                           "data": [{
                 "index": 1,
                 "stationName": station_name,
@@ -184,8 +170,8 @@ try:
                 }]})
                             # OBJ_FOR_JSON[station].append(row_in_csv)
                         for index, str_indicator in enumerate(row_in_csv):
-                            night_data_in_json = OBJ_FOR_JSON[station][0]["data"][0]
-                            day_data_in_json = OBJ_FOR_JSON[station][1]["data"][0]
+                            night_data_in_json = OBJ_FOR_JSON[station_code][0]["data"][0]
+                            day_data_in_json = OBJ_FOR_JSON[station_code][1]["data"][0]
                             if(index < 6):
                                 if(index % 2):
                                     night_data_in_json['viewOsad'].append(str_indicator)
@@ -217,6 +203,6 @@ try:
                                 else:
                                     day_data_in_json['indicatorsOfBlackIce'].append(str_indicator)
     if(len(OBJ_FOR_JSON)):                            
-        add_to_json(FILE_NAME, OBJ_FOR_JSON)
+        add_to_json(JSON_FILE_NAME, OBJ_FOR_JSON)
 except Exception as e:
     print('Exception', e)
