@@ -86,8 +86,8 @@ REGION = 0
 STATION_NAME = 1
 
 
-DB_COLUMS = """ (ks, dt_load, d_vrf, n_vrf, d_rf, n_rf, d_temp,
-                     n_temp, d_sh, n_sh, d_gw, n_gw, d_bi, n_bi) """
+DB_COLUMS = """ (ks, dt_load, n_vrf, d_vrf, n_rf, d_rf, n_temp,
+                     d_temp, n_sh, d_sh, n_gw, d_gw, n_bi, d_bi) """
 
 STATIONS_ENCOUNTERED = {}
 
@@ -130,25 +130,37 @@ def get_data_from_json():
         regexp = re.compile(r'\d+/\d')
         mas_of_dates = []
         mas_with_data = []
+        # разбираем csv построчно
         for row_in_csv in reader_obj:
-            # print(row_in_csv)
+            # если не пустая строка пришла
             if (len(row_in_csv)):
+                # находим строки которые соответствуют условию регулярного выражения (это для дат)
                 mas_of_dates_unsorted = list(
                     filter(regexp.match, row_in_csv))
+                # вбираем строки, в которых больше 2 элементов
                 if (len(mas_of_dates_unsorted) > 2):
-                    # массив дат в конце прохождения
+                    # оставляем уникальные значения в массиве дат
                     mas_of_dates.extend(
                         list(OrderedDict.fromkeys(mas_of_dates_unsorted)))
+                # перебор по всем регионам для дальнейшего совпадения в строках
                 for region in REGION_NAMES:
+                    # если в строке найден регион
                     if (region in row_in_csv):
+                        # наименование станции
                         station_name = row_in_csv[1]
+                        # добавляем в массив данных номер региона
                         mas_with_data.append(convert_region_number(row_in_csv))
+                        # запоминаем код станции
                         station_code = row_in_csv[1]
+                        print(row_in_csv)
+                        # удаляем номер региона и код станции, чтобы прохиолдить по значениям без них
                         row_in_csv.pop(0)
                         row_in_csv.pop(0)
+                        # проверка, встречали ли такую станцию
                         if (station_code not in STATIONS_ENCOUNTERED):
                             STATIONS_ENCOUNTERED[station_code] = {"index": 0}
                         else:
+                            # если встречали то увеличиваем счетчик
                             STATIONS_ENCOUNTERED[station_code]['index'] += 1
                         # массив для хранения данных построчно и по датам
                         DATA_ARRAY = {}
@@ -156,7 +168,9 @@ def get_data_from_json():
                         N_PASS = STATIONS_ENCOUNTERED[station_code]['index']
                         # ИНДЕКС ПРОХОДА ЦИКЛА, УМНОЖАЕТСЯ НА 3 ПОТОМУ ЧТО БЕРЕМ ПО 3 ДАТЫ
                         CYCLE_PASS_INDEX = N_PASS * 3
+                        # посимвольно считываем строку из csv
                         for index, str_indicator in enumerate(row_in_csv):
+                            # остаток от деления на 6, потому что 6 показателей
                             if (index % 6 < 2):
                                 # ИНДЕКС УМНОЖЕНИЯ (ДЛЯ ВСЕХ РАЗНЫЙ ОТ 0 ДО 2)
                                 MULTIPLICATION_INDEX = 0
@@ -164,8 +178,9 @@ def get_data_from_json():
                                 MULTIPLICATION_INDEX = 1
                             elif (index % 6 < 6):
                                 MULTIPLICATION_INDEX = 2
-                            #  ИНДЕКС ДАТЫ
+                            #  ИНДЕКС ДАТЫ, нужен чтобы понимать какую дату из массива выбирать
                             DATE_INDEX = MULTIPLICATION_INDEX + CYCLE_PASS_INDEX
+                            # выбираем дату, соотвествующую показателыям
                             curr_date = date_correction(
                                 mas_of_dates[DATE_INDEX])
                             if curr_date not in DATA_ARRAY:
@@ -183,6 +198,8 @@ try:
                      port="5432",
                      db_name="postgres"
                      )
+    # clear DB
+    db.query('delete from test.forecast f', '')
     get_data_from_json()
     for data_row in DATA_TO_ADD:
         for indicators in data_row:
